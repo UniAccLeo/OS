@@ -58,7 +58,6 @@ int main(int argk, char *argv[], char *envp[]) {
           printf("[%d] %d\n", jobs[pid], pid);
           activeTasks--;
         }
-        continue;
       };
       exit(0);
     }
@@ -107,6 +106,7 @@ int main(int argk, char *argv[], char *envp[]) {
         if (!isBackgroundTask) {  // do not wait if background task
           if (wait(NULL) == -1) perror("wait");
         } else {
+          printf("[%d] %d\n", jobNumber, frkRtnVal);
           jobs[frkRtnVal] =
               jobNumber;  // sets pid and increases active task count
           jobNumber++;
