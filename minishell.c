@@ -40,7 +40,7 @@ int main(int argk, char *argv[], char *envp[]) {
   int i;                 /* parse index */
   bool isBackgroundTask; /* whether the task is a background task */
   int jobs[100000];      /* tracks all pids for jobs */
-  int jobNumber = 0;     /* tracks the current number to assignn to a job*/
+  int jobNumber = 1;     /* tracks the current number to assignn to a job*/
   int activeTasks = 0;   /* tracks number of active tasks*/
   pid_t pid;             /* tracks process pid*/
   int status;            /* tracks process status*/
@@ -53,7 +53,7 @@ int main(int argk, char *argv[], char *envp[]) {
     isBackgroundTask = false;
     // This if() required for gradescope
     if (feof(stdin)) { /* non-zero on EOF */
-      if (activeTasks > 0) {
+      while (activeTasks > 0) {
         while ((pid = (waitpid(-1, &status, WNOHANG))) > 0) {
           printf("[%d] %d\n", jobs[pid], pid);
           activeTasks--;
