@@ -62,7 +62,7 @@ int main(int argk, char *argv[], char *envp[]) {
         while ((pid = (waitpid(-1, &status, WNOHANG))) > 0) {
           for (int j = 1; j < jobNumber; j++) {
             if (jobs[j].pid == pid) {
-              printf("[%d]+ Done %s\n", j, jobs[j].name);
+              printf("[%d]+ Done                 %s\n", j, jobs[j].name);
               activeTasks--;
               break;
             }
