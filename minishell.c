@@ -26,7 +26,12 @@ void prompt(void) {
   // ## REMOVE THIS 'fprintf' STATEMENT BEFORE SUBMISSION
   // fprintf(stdout, "\n msh> ");
   fflush(stdout);
-}
+};
+
+typedef struct {
+  pid_t pid;
+  char name[100];
+} jobInfo;
 
 /* argk - number of arguments */
 /* argv - argument vector from command line */
@@ -39,7 +44,7 @@ int main(int argk, char *argv[], char *envp[]) {
   char *sep = " \t\n";   /* command line token separators */
   int i;                 /* parse index */
   bool isBackgroundTask; /* whether the task is a background task */
-  int jobs[100000];      /* tracks all pids for jobs */
+  jobInfo jobs[100];     /* tracks all pids for jobs */
   int jobNumber = 1;     /* tracks the current number to assignn to a job*/
   int activeTasks = 0;   /* tracks number of active tasks*/
   pid_t pid;             /* tracks process pid*/
@@ -55,8 +60,13 @@ int main(int argk, char *argv[], char *envp[]) {
     if (feof(stdin)) { /* non-zero on EOF */
       while (activeTasks > 0) {
         while ((pid = (waitpid(-1, &status, WNOHANG))) > 0) {
-          printf("[%d] %d\n", jobs[pid], pid);
-          activeTasks--;
+          for (int j = 1; j < jobNumber; j++) {
+            if (jobs[j].pid == pid) {
+              printf("[%d]+ Done %s\n", j, jobs[j].name);
+              activeTasks--;
+              break;
+            }
+          }
         }
       };
       exit(0);
@@ -65,6 +75,8 @@ int main(int argk, char *argv[], char *envp[]) {
       continue; /* to prompt */
     }
 
+    char originalLine[100];
+    strcpy(originalLine, line);
     v[0] = strtok(line, sep);
 
     for (i = 1; i < NV; i++) {
@@ -107,8 +119,9 @@ int main(int argk, char *argv[], char *envp[]) {
           if (wait(NULL) == -1) perror("wait");
         } else {
           printf("[%d] %d\n", jobNumber, frkRtnVal);
-          jobs[frkRtnVal] =
-              jobNumber;  // sets pid and increases active task count
+          jobs[jobNumber].pid = frkRtnVal;
+          originalLine[strcspn(originalLine, "&")] = '\0';  // remove &
+          strcpy(jobs[jobNumber].name, originalLine);  // copy original line
           jobNumber++;
           activeTasks++;
         }
@@ -119,8 +132,13 @@ int main(int argk, char *argv[], char *envp[]) {
     } /* switch */
     while ((pid = (waitpid(-1, &status, WNOHANG))) >
            0) {  // checks if a background task has finished
-      printf("[%d] %d\n", jobs[pid], pid);
-      activeTasks--;  // decrements job count when done
+      for (int j = 1; j < jobNumber; j++) {
+        if (jobs[j].pid == pid) {
+          printf("[%d]+ Done                 %s\n", j, jobs[j].name);
+          activeTasks--;
+          break;
+        }
+      }
     }
   } /* while */
 } /* main */
