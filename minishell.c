@@ -61,8 +61,6 @@ int main(int argk, char *argv[], char *envp[]) {
   char *sep = " \t\n";   /* command line token separators */
   int i;                 /* parse index */
   bool isBackgroundTask; /* whether the task is a background task */
-  pid_t pid;             /* tracks process pid*/
-  int status;            /* tracks process status*/
 
   signal(SIGCHLD, handle_sigchld);
 
