@@ -1,0 +1,13 @@
+Summary
+
+Each trace line tells your simulator what memory is accessed and how.
+
+You divide the memory address into page number and offset (page size = 4 KB).
+
+Your simulator checks if the page is in memory:
+
+Hit → continue
+
+Miss → bring page into memory, possibly evicting another page based on your enum policy.
+
+Keep track of statistics: page faults, hits, writes, etc.
