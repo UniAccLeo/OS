@@ -14,14 +14,14 @@ typedef struct {
   char AccessInfo;
 } PTE;
 
-enum repl { random, fifo, lru, clock };
+enum repl { rando, fifo, lru, clock };
 int createMMU(int);
 int checkInMemory(int);
 int allocateFrame(int, enum repl);
 page selectVictim(int, enum repl);
 const int pageoffset = 12; /* Page size is fixed to 4 KB */
 int numFrames;
-const int maxpages = 100;
+const int maxpages = 100000000;
 PTE pageTable[maxpages];
 int *frameTable;
 int fifoIndex = 0;
@@ -69,6 +69,7 @@ int allocateFrame(int page_number, enum repl mode) {
   pageTable[page_number].present = 1;
   pageTable[page_number].frameno = free;
   pageTable[page_number].AccessInfo = accessIndex;
+  pageTable[page_number].modified = 0;
 
   return free;
 }
@@ -79,7 +80,7 @@ page selectVictim(int page_number, enum repl mode) {
   page victim;
   int victimIndex;
   // to do
-  if (mode == random) {
+  if (mode == rando) {
     victimIndex = (int)(rand() / (RAND_MAX + 1.0) * numFrames);
   } else if (mode == fifo) {
     victimIndex = fifoIndex;
@@ -97,28 +98,32 @@ page selectVictim(int page_number, enum repl mode) {
       }
     }
   } else if (mode == clock) {
-    for (clockIndex;; clockIndex = clockIndex++ % numFrames) {
+    for (;; clockIndex = (clockIndex + 1) % numFrames) {
       if (pageTable[frameTable[clockIndex]].AccessInfo == 0) {
         victimIndex = clockIndex;
+        clockIndex++;
         break;
       } else {
         pageTable[frameTable[clockIndex]].AccessInfo = 0;
       }
     }
+    pageTable[frameTable[victimIndex]].AccessInfo = 1;
   }
   victim.pageNo = frameTable[victimIndex];
   victim.modified = pageTable[victim.pageNo].modified;
+  frameTable[victimIndex] = page_number;
 
   pageTable[page_number].present = 1;
   pageTable[page_number].frameno = victimIndex;
+  pageTable[page_number].modified = 0;
 
   pageTable[victim.pageNo].present = 0;
-  pageTable[victim.pageNo].frameno = victimIndex;
+  pageTable[victim.pageNo].frameno = -1;
 
   return (victim);
 }
 
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   char *tracename;
   int page_number, frame_no, done;
   int do_line, i;
@@ -151,7 +156,7 @@ main(int argc, char *argv[]) {
     if (strcmp(argv[3], "lru\0") == 0)
       replace = lru;
     else if (strcmp(argv[3], "rand\0") == 0)
-      replace = random;
+      replace = rando;
     else if (strcmp(argv[3], "clock\0") == 0)
       replace = clock;
     else if (strcmp(argv[3], "fifo\0") == 0)
@@ -209,7 +214,8 @@ main(int argc, char *argv[]) {
       if (debugmode) printf("reading    %8d \n", page_number);
     } else if (rw == 'W') {
       // mark page in page table as written - modified
-      if (debugmode) printf("writting   %8d \n", page_number);
+      pageTable[page_number].modified = 1;
+      if (debugmode) printf("writing   %8d \n", page_number);
     } else {
       printf("Badly formatted file. Error on line %d\n", no_events + 1);
       exit(-1);
