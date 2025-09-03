@@ -25,7 +25,7 @@ const int maxpages = 100000000;
 PTE pageTable[maxpages];
 int *frameTable;
 int fifoIndex = 0;
-int accessIndex = 1;
+int accessIndex = 0;
 int clockIndex = 0;
 
 /* Creates the page table structure to record memory allocation */
@@ -51,13 +51,13 @@ int checkInMemory(int page_number) {
   int result = -1;
   if (pageTable[page_number].present) {
     result = pageTable[page_number].frameno;
+    pageTable[page_number].AccessInfo = accessIndex;
   }
   return result;
 }
 
 /* allocate page to the next free frame and record where it put it */
 int allocateFrame(int page_number, enum repl mode) {
-  accessIndex++;
   int free = -1;
   for (int i = 0; i < numFrames; i++) {
     if (frameTable[i] == -1) {
@@ -88,12 +88,10 @@ page selectVictim(int page_number, enum repl mode) {
     fifoIndex = fifoIndex % numFrames;
   } else if (mode == lru) {
     pageTable[page_number].AccessInfo = accessIndex;
-    accessIndex++;
     victimIndex = 0;
-    int LRU = pageTable[frameTable[0]].AccessInfo;
     for (int i = 1; i < numFrames; i++) {
-      if (pageTable[frameTable[i]].AccessInfo < LRU) {
-        LRU = pageTable[frameTable[i]].AccessInfo;
+      if (pageTable[frameTable[i]].AccessInfo <
+          pageTable[frameTable[victimIndex]].AccessInfo) {
         victimIndex = i;
       }
     }
@@ -101,7 +99,7 @@ page selectVictim(int page_number, enum repl mode) {
     for (;; clockIndex = (clockIndex + 1) % numFrames) {
       if (pageTable[frameTable[clockIndex]].AccessInfo == 0) {
         victimIndex = clockIndex;
-        clockIndex++;
+        clockIndex = (clockIndex + 1) % numFrames;
         break;
       } else {
         pageTable[frameTable[clockIndex]].AccessInfo = 0;
@@ -188,6 +186,7 @@ int main(int argc, char *argv[]) {
   do_line = fscanf(trace, "%x %c", &address, &rw);
   while (do_line == 2) {
     page_number = address >> pageoffset;
+    accessIndex++;
     frame_no = checkInMemory(page_number); /* ask for physical address */
 
     if (frame_no == -1) {
