@@ -17,7 +17,7 @@ typedef struct {
 enum repl { rando, fifo, lru, clock };
 int createMMU(int);
 int checkInMemory(int);
-int allocateFrame(int, enum repl);
+int allocateFrame(int);
 page selectVictim(int, enum repl);
 const int pageoffset = 12; /* Page size is fixed to 4 KB */
 int numFrames;
@@ -57,7 +57,7 @@ int checkInMemory(int page_number) {
 }
 
 /* allocate page to the next free frame and record where it put it */
-int allocateFrame(int page_number, enum repl mode) {
+int allocateFrame(int page_number) {
   int free = -1;
   for (int i = 0; i < numFrames; i++) {
     if (frameTable[i] == -1) {
@@ -194,7 +194,7 @@ int main(int argc, char *argv[]) {
       if (debugmode) printf("Page fault %8d \n", page_number);
       if (allocated < numFrames) /* allocate it to an empty frame */
       {
-        frame_no = allocateFrame(page_number, replace);
+        frame_no = allocateFrame(page_number);
         allocated++;
       } else {
         Pvictim = selectVictim(page_number,
