@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAXPAGES 100000000
+
 typedef struct {
   int pageNo;
   int modified;
@@ -11,7 +13,7 @@ typedef struct {
   int modified;
   int frameno;
   int present;
-  char AccessInfo;
+  int AccessInfo;
 } PTE;
 
 enum repl { rando, fifo, lru, clock };
@@ -21,8 +23,8 @@ int allocateFrame(int);
 page selectVictim(int, enum repl);
 const int pageoffset = 12; /* Page size is fixed to 4 KB */
 int numFrames;
-const int maxpages = 100000000;
-PTE pageTable[maxpages];
+
+PTE pageTable[MAXPAGES];
 int *frameTable;
 int fifoIndex = 0;
 int accessIndex = 0;
@@ -36,7 +38,7 @@ int createMMU(int frames) {
     frameTable[i] = -1;  // all slots are free initially
   }
 
-  for (int j = 0; j < maxpages; j++) {
+  for (int j = 0; j < MAXPAGES; j++) {
     pageTable[j].frameno = -1;
     pageTable[j].modified = 0;
     pageTable[j].present = 0;
@@ -82,10 +84,7 @@ page selectVictim(int page_number, enum repl mode) {
   // to do
   if (mode == rando) {
     victimIndex = (int)(rand() / (RAND_MAX + 1.0) * numFrames);
-  } else if (mode == fifo) {
-    victimIndex = fifoIndex;
-    fifoIndex++;
-    fifoIndex = fifoIndex % numFrames;
+ 
   } else if (mode == lru) {
     pageTable[page_number].AccessInfo = accessIndex;
     victimIndex = 0;
