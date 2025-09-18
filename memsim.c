@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAXPAGES 100000000
+#define MAXPAGES 1000000
 
 typedef struct {
   int pageNo;
