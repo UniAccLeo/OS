@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>  
 
-#define MAXPAGES 1000000
+#define MAXPAGES 100000000
 
 typedef struct {
   int pageNo;
@@ -16,7 +17,7 @@ typedef struct {
   int AccessInfo;
 } PTE;
 
-enum repl { rando, fifo, lru, clock };
+enum repl { rando, fifo, lru, clockAlg };
 int createMMU(int);
 int checkInMemory(int);
 int allocateFrame(int);
@@ -94,7 +95,7 @@ page selectVictim(int page_number, enum repl mode) {
         victimIndex = i;
       }
     }
-  } else if (mode == clock) {
+  } else if (mode == clockAlg) {
     for (;; clockIndex = (clockIndex + 1) % numFrames) {
       if (pageTable[frameTable[clockIndex]].AccessInfo == 0) {
         victimIndex = clockIndex;
@@ -122,6 +123,8 @@ page selectVictim(int page_number, enum repl mode) {
 
 int main(int argc, char *argv[]) {
   char *tracename;
+  clock_t start, end;
+  double sim_time;
   int page_number, frame_no, done;
   int do_line, i;
   int no_events, disk_writes, disk_reads;
@@ -154,8 +157,8 @@ int main(int argc, char *argv[]) {
       replace = lru;
     else if (strcmp(argv[3], "rand\0") == 0)
       replace = rando;
-    else if (strcmp(argv[3], "clock\0") == 0)
-      replace = clock;
+    else if (strcmp(argv[3], "clockAlg\0") == 0)
+      replace = clockAlg;
     else if (strcmp(argv[3], "fifo\0") == 0)
       replace = fifo;
     else {
@@ -182,6 +185,7 @@ int main(int argc, char *argv[]) {
   disk_writes = 0;
   disk_reads = 0;
 
+  start = clock();
   do_line = fscanf(trace, "%x %c", &address, &rw);
   while (do_line == 2) {
     page_number = address >> pageoffset;
@@ -222,10 +226,22 @@ int main(int argc, char *argv[]) {
     no_events++;
     do_line = fscanf(trace, "%x %c", &address, &rw);
   }
+  
+  // Calculate runtime
+  end = clock();
+  sim_time = (double)(end - start) / CLOCKS_PER_SEC;
 
-  printf("total memory frames:  %d\n", numFrames);
-  printf("events in trace:      %d\n", no_events);
-  printf("total disk reads:     %d\n", disk_reads);
-  printf("total disk writes:    %d\n", disk_writes);
-  printf("page fault rate:      %.4f\n", (float)disk_reads / no_events);
+  // CSV output: trace,algorithm,frames,page_faults,fault_rate,hit_rate,sim_time
+  printf("%s,%s,%d,%d,%.6f,%.6f,%.6f\n",
+         tracename, argv[3], numFrames,
+         disk_reads,
+         (float)disk_reads / no_events,         // fault_rate
+         1.0 - ((float)disk_reads / no_events), // hit_rate
+         sim_time);
+
+  // printf("total memory frames:  %d\n", numFrames);
+  // printf("events in trace:      %d\n", no_events);
+  // printf("total disk reads:     %d\n", disk_reads);
+  // printf("total disk writes:    %d\n", disk_writes);
+  // printf("page fault rate:      %.4f\n", (float)disk_reads / no_events);
 }
