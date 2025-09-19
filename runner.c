@@ -9,14 +9,14 @@ int main() {
     char *algos[] = {"rand", "fifo", "lru", "clockAlg"};
     
     // Frame counts to test
-    int frames[] = {1,2,4,8,16,32,64,128,256,512,1024};
+    int frames[] = {1,2,4,8,16,32,64,128,256,512,1024,2048,4096,8192};
     
     int numTraces = sizeof(traces)/sizeof(traces[0]);
     int numAlgos = sizeof(algos)/sizeof(algos[0]);
     int numFrames = sizeof(frames)/sizeof(frames[0]);
 
     // Write CSV header
-    FILE *csv = fopen("results.csv", "w");
+    FILE *csv = fopen("results2.csv", "w");
     if(!csv) {
         perror("Cannot open results.csv");
         return 1;
